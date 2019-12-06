@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"regexp"
 	"strings"
 
 	"github.com/c-bata/go-prompt"
@@ -34,18 +33,19 @@ func main() {
 	in := prompt.Input("branch: ", completer,
 		prompt.OptionTitle("git checkout"),
 		prompt.OptionPrefixTextColor(prompt.Blue))
-	r := regexp.MustCompile(`remotes/(.*)/(.*)`)
-	result := r.FindAllStringSubmatch(in, -1)
 
-	if len(result) == 0 {
-		checkout(in, func() {
-			out, err := runCommand(exec.Command("git", "checkout", in))
+	if strings.HasPrefix(in, "remotes/") {
+		strs := strings.Split(in, "/")
+		branch := strings.Join(strs[2:], "/")
+		checkout(branch, func() {
+			out, err := runCommand(exec.Command("git", "checkout", "-b", branch, in))
 			exitIfError(err)
 			fmt.Println(out)
 		})
+
 	} else {
-		checkout(result[0][2], func() {
-			out, err := runCommand(exec.Command("git", "checkout", "-b", result[0][2], result[0][1]+"/"+result[0][2]))
+		checkout(in, func() {
+			out, err := runCommand(exec.Command("git", "checkout", in))
 			exitIfError(err)
 			fmt.Println(out)
 		})
