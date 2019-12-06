@@ -53,15 +53,10 @@ func main() {
 }
 
 func checkout(branch string, fn func()) {
-	if branch != currentBranch() {
-		isDirty := isWorkingTreeDirty()
-		if !isDirty {
-			exec.Command("git", "stash", "save")
-		}
+	if branch == currentBranch() {
+		fmt.Printf("Already in %s\n", branch)
+	} else {
 		fn()
-		if !isDirty {
-			exec.Command("git", "stash", "pop")
-		}
 	}
 }
 
@@ -76,11 +71,6 @@ func currentBranch() string {
 		}
 	}
 	return s
-}
-
-func isWorkingTreeDirty() bool {
-	out, _ := exec.Command("git", "status").Output()
-	return strings.Index(string(out), "nothing to commit, working tree clean") == -1
 }
 
 func runCommand(cmd *exec.Cmd) (string, error) {
