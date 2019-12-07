@@ -21,8 +21,12 @@ func main() {
 	exitIfError(err)
 
 	lines := strings.Split(out, "\n")
-	for i := 0; i < len(lines); i++ {
-		line := strings.TrimSpace(lines[i])
+	for _, line := range lines {
+		line := strings.TrimSpace(line)
+		if len(line) == 0 {
+			continue
+		}
+
 		if strings.Index(line, "*") == 0 {
 			s = append(s, prompt.Suggest{Text: line[2:len(line)], Description: "*"})
 		} else {
@@ -64,8 +68,8 @@ func currentBranch() string {
 	out, _ := exec.Command("git", "branch").Output()
 	lines := strings.Split(string(out), "\n")
 	var s string = ""
-	for i := 0; i < len(lines); i++ {
-		line := strings.TrimSpace(lines[i])
+	for _, line := range lines {
+		line := strings.TrimSpace(line)
 		if strings.Index(line, "*") == 0 {
 			s = line[2:len(line)]
 		}
