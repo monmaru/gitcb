@@ -10,16 +10,30 @@ import (
 	"github.com/c-bata/go-prompt"
 )
 
-var s []prompt.Suggest
+func main() {
+	in := prompt.Input("branch: ", makeBranchSelector(),
+		prompt.OptionTitle("git checkout"),
+		prompt.OptionPrefixTextColor(prompt.Blue))
 
-func completer(in prompt.Document) []prompt.Suggest {
-	return prompt.FilterContains(s, in.GetWordBeforeCursor(), true)
+	if len(in) == 0 {
+		fmt.Println("Canceled")
+		return
+	}
+
+	if strings.HasPrefix(in, "remotes/") {
+		strs := strings.Split(in, "/")
+		branch := strings.Join(strs[2:], "/")
+		checkout(branch, exec.Command("git", "checkout", "-b", branch, in))
+	} else {
+		checkout(in, exec.Command("git", "checkout", in))
+	}
 }
 
-func main() {
+func makeBranchSelector() func(in prompt.Document) []prompt.Suggest {
 	out, err := runCommand(exec.Command("git", "branch", "-a"))
 	exitIfError(err)
 
+	var s []prompt.Suggest
 	lines := strings.Split(out, "\n")
 	for _, line := range lines {
 		line := strings.TrimSpace(line)
@@ -34,33 +48,18 @@ func main() {
 		}
 	}
 
-	in := prompt.Input("branch: ", completer,
-		prompt.OptionTitle("git checkout"),
-		prompt.OptionPrefixTextColor(prompt.Blue))
-
-	if strings.HasPrefix(in, "remotes/") {
-		strs := strings.Split(in, "/")
-		branch := strings.Join(strs[2:], "/")
-		checkout(branch, func() {
-			out, err := runCommand(exec.Command("git", "checkout", "-b", branch, in))
-			exitIfError(err)
-			fmt.Println(out)
-		})
-
-	} else {
-		checkout(in, func() {
-			out, err := runCommand(exec.Command("git", "checkout", in))
-			exitIfError(err)
-			fmt.Println(out)
-		})
+	return func(in prompt.Document) []prompt.Suggest {
+		return prompt.FilterContains(s, in.GetWordBeforeCursor(), true)
 	}
 }
 
-func checkout(branch string, fn func()) {
+func checkout(branch string, cmd *exec.Cmd) {
 	if branch == currentBranch() {
 		fmt.Printf("Already in %s\n", branch)
 	} else {
-		fn()
+		out, err := runCommand(cmd)
+		exitIfError(err)
+		fmt.Println(out)
 	}
 }
 
