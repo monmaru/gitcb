@@ -11,7 +11,9 @@ import (
 )
 
 func main() {
-	in := prompt.Input("branch: ", makeBranchSelector(),
+	in := prompt.Input(
+		"branch: ",
+		makeBranchSelector(),
 		prompt.OptionTitle("git checkout"),
 		prompt.OptionPrefixTextColor(prompt.Blue))
 
@@ -21,8 +23,8 @@ func main() {
 	}
 
 	if strings.HasPrefix(in, "remotes/") {
-		strs := strings.Split(in, "/")
-		branch := strings.Join(strs[2:], "/")
+		ss := strings.Split(in, "/")
+		branch := strings.Join(ss[2:], "/")
 		checkout(branch, exec.Command("git", "checkout", "-b", branch, in))
 	} else {
 		checkout(in, exec.Command("git", "checkout", in))
@@ -33,7 +35,7 @@ func makeBranchSelector() func(in prompt.Document) []prompt.Suggest {
 	out, err := runCommand(exec.Command("git", "branch", "-a"))
 	exitIfError(err)
 
-	var s []prompt.Suggest
+	var suggests []prompt.Suggest
 	lines := strings.Split(out, "\n")
 	for _, line := range lines {
 		line := strings.TrimSpace(line)
@@ -42,38 +44,39 @@ func makeBranchSelector() func(in prompt.Document) []prompt.Suggest {
 		}
 
 		if strings.Index(line, "*") == 0 {
-			s = append(s, prompt.Suggest{Text: line[2:len(line)], Description: "*"})
+			suggests = append(suggests, prompt.Suggest{Text: line[2:len(line)], Description: "*"})
 		} else {
-			s = append(s, prompt.Suggest{Text: line})
+			suggests = append(suggests, prompt.Suggest{Text: line})
 		}
 	}
 
 	return func(in prompt.Document) []prompt.Suggest {
-		return prompt.FilterContains(s, in.GetWordBeforeCursor(), true)
+		return prompt.FilterContains(suggests, in.GetWordBeforeCursor(), true)
 	}
 }
 
 func checkout(branch string, cmd *exec.Cmd) {
 	if branch == currentBranch() {
 		fmt.Printf("Already in %s\n", branch)
-	} else {
-		out, err := runCommand(cmd)
-		exitIfError(err)
-		fmt.Println(out)
+		return
 	}
+
+	out, err := runCommand(cmd)
+	exitIfError(err)
+	fmt.Println(out)
 }
 
 func currentBranch() string {
 	out, _ := exec.Command("git", "branch").Output()
 	lines := strings.Split(string(out), "\n")
-	var s string = ""
+	var branch string = ""
 	for _, line := range lines {
 		line := strings.TrimSpace(line)
 		if strings.Index(line, "*") == 0 {
-			s = line[2:len(line)]
+			branch = line[2:len(line)]
 		}
 	}
-	return s
+	return branch
 }
 
 func runCommand(cmd *exec.Cmd) (string, error) {
