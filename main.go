@@ -44,7 +44,7 @@ func makeBranchSelector() func(in prompt.Document) []prompt.Suggest {
 		}
 
 		if strings.Index(line, "*") == 0 {
-			suggests = append(suggests, prompt.Suggest{Text: line[2:len(line)], Description: "*"})
+			suggests = append(suggests, prompt.Suggest{Text: line[2:], Description: "*"})
 		} else {
 			suggests = append(suggests, prompt.Suggest{Text: line})
 		}
@@ -73,7 +73,7 @@ func currentBranch() string {
 	for _, line := range lines {
 		line := strings.TrimSpace(line)
 		if strings.Index(line, "*") == 0 {
-			branch = line[2:len(line)]
+			branch = line[2:]
 		}
 	}
 	return branch
