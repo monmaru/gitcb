@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -15,7 +16,8 @@ func main() {
 		"branch: ",
 		makeBranchSelector(),
 		prompt.OptionTitle("git checkout"),
-		prompt.OptionPrefixTextColor(prompt.Blue))
+		prompt.OptionPrefixTextColor(prompt.Blue),
+		prompt.OptionSuggestionBGColor(prompt.DarkGray))
 
 	if len(in) == 0 {
 		fmt.Println("Canceled")
@@ -90,7 +92,7 @@ func runCommand(cmd *exec.Cmd) (string, error) {
 		if len(errStr) == 0 {
 			return "", err
 		}
-		return "", fmt.Errorf(errStr)
+		return "", errors.New(errStr)
 	}
 
 	return stdout.String(), nil
